@@ -2,6 +2,32 @@ import asyncio
 from playwright.async_api import async_playwright
 from src.parser import get_recipe_details
 from src.utils import save_to_json
+import time
+
+async def count_api_requests(page, duration_minutes):
+    # Initialize request counter
+    api_request_count = 0
+
+    # Define the request handler
+    def on_request(request):
+        nonlocal api_request_count
+        if "/api/" in request.url or "recipe-ajax.php" in request.url:
+            api_request_count += 1
+
+    # Listen to all requests
+    page.on("request", on_request)
+
+    # Start the timer
+    start_time = time.time()
+    duration_seconds = duration_minutes * 60
+
+    print(f"Monitoring API requests for {duration_minutes} minute(s)...")
+
+    # Keep the script running for the specified duration
+    while time.time() - start_time < duration_seconds:
+        await asyncio.sleep(1)
+
+    print(f"Total API requests made: {api_request_count}")
 
 async def fetch_recipes(page, current_page):
     # Define the data to be sent in the POST request
@@ -40,6 +66,7 @@ async def scrape_recipes():
             current_page = 1
             while True:
                 print(f"Scraping page {current_page}")
+                await count_api_requests(page, duration_minutes=1) # Change duration here as needed
 
                 # Fetch the recipes using AJAX
                 response_html = await fetch_recipes(page, current_page)
@@ -52,24 +79,3 @@ async def scrape_recipes():
                     'div.rc_post > div.rc_thumb_wrap > a',
                     'elements => elements.map(e => e.href)'
                 )
-
-                if not recipe_links:
-                    print("No more recipes found.")
-                    break
-
-                for link in recipe_links:
-                    recipe = await get_recipe_details(page, link)
-                    if recipe:
-                        all_recipes.append(recipe)
-
-                current_page += 1
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        finally:
-            await browser.close()
-
-    save_to_json('data/processed/recipes.json', all_recipes)
-
-if __name__ == '__main__':
-    asyncio.run(scrape_recipes())
