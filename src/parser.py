@@ -27,3 +27,25 @@ async def get_recipe_details(page, url):
         steps = await section.inner_html()
         process.append(steps.strip())
         print(f"Process: {process}")
+
+    recent_recipe_link = await page.eval_on_selector_all(
+        'div.recipe_sidebar_recent.recipe_sidebar_section a',
+        'elements => elements.map(e => e.href)'
+    )
+
+    # Use a set to remove duplicates while preserving order
+    seen = set()
+    recent_recipe_links = []
+    for link in recent_recipe_link:
+        if link not in seen:
+            seen.add(link)
+            recent_recipe_links.append(link)
+
+    print(f"Inner Links: {recent_recipe_links}")
+
+    return {
+        'title': title,
+        'ingredients': ingredients,
+        'process': process,
+        'recent_recipes': recent_recipe_links
+    }
