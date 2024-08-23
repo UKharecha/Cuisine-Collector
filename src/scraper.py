@@ -79,3 +79,24 @@ async def scrape_recipes():
                     'div.rc_post > div.rc_thumb_wrap > a',
                     'elements => elements.map(e => e.href)'
                 )
+
+                if not recipe_links:
+                    print("No more recipes found.")
+                    break
+
+                for link in recipe_links:
+                    recipe = await get_recipe_details(page, link)
+                    if recipe:
+                        all_recipes.append(recipe)
+
+                current_page += 1
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+        finally:
+            await browser.close()
+
+    save_to_json('data/processed/recipes.json', all_recipes)
+
+if __name__ == '__main__':
+    asyncio.run(scrape_recipes())
