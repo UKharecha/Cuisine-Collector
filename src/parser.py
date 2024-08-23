@@ -27,9 +27,3 @@ async def get_recipe_details(page, url):
         steps = await section.inner_html()
         process.append(steps.strip())
         print(f"Process: {process}")
-
-    return {
-        'title': title,
-        'ingredients': ingredients,
-        'process': process
-    }
