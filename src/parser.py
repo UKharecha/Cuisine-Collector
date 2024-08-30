@@ -49,3 +49,4 @@ async def get_recipe_details(page, url):
         'process': process,
         'recent_recipes': recent_recipe_links
     }
+
