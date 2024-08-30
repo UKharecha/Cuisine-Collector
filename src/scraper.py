@@ -54,14 +54,17 @@ async def fetch_recipes(page, current_page):
 async def scrape_recipes():
     base_url = 'https://ranveerbrar.com/recipes/'
     all_recipes = []
+    all_inner_links = []
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
 
+        page.set_default_navigation_timeout(120000)
+
         try:
             # Start by loading the base URL
-            await page.goto(base_url, timeout=60000)
+            await page.goto(base_url)
 
             current_page = 1
             while True:
@@ -88,6 +91,7 @@ async def scrape_recipes():
                     recipe = await get_recipe_details(page, link)
                     if recipe:
                         all_recipes.append(recipe)
+                        all_inner_links.extend(recipe['recent_recipes'])
 
                 current_page += 1
 
@@ -97,6 +101,8 @@ async def scrape_recipes():
             await browser.close()
 
     save_to_json('data/processed/recipes.json', all_recipes)
+    save_to_json('data/processed/recent_recipe_links.json', all_inner_links)
+
 
 if __name__ == '__main__':
     asyncio.run(scrape_recipes())
